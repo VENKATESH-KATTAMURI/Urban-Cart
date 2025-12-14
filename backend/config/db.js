@@ -6,8 +6,20 @@ let db;
 const connectDB = async () => {
   try {
     const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/urbancart';
-    client = new MongoClient(uri);
+    
+    // MongoDB connection options with SSL/TLS settings for Atlas
+    const options = {
+      tls: true,
+      tlsAllowInvalidCertificates: false,
+      tlsAllowInvalidHostnames: false,
+      retryWrites: true,
+      serverSelectionTimeoutMS: 30000,
+      socketTimeoutMS: 45000,
+    };
+    
+    client = new MongoClient(uri, options);
     await client.connect();
+    
     // Use database from URI path or fallback to 'urbancart'
     const dbName = (uri.split('/')?.pop()?.split('?')[0]) || 'urbancart';
     db = client.db(dbName);
