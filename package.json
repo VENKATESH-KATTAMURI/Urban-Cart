@@ -1,0 +1,22 @@
+{
+  "name": "urbancart-monorepo",
+  "private": true,
+  "version": "1.0.0",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "scripts": {
+    "dev:backend": "cd backend && npm run dev",
+    "start:backend": "cd backend && npm start",
+    "start": "cd backend && npm start",
+    "seed": "cd backend && npm run seed",
+    "dev:frontend": "cd frontend/client && npm start",
+    "build:frontend": "cd frontend/client && npm run build",
+    "build": "npm run build:frontend && powershell -NoProfile -Command \"Copy-Item -Recurse -Force ./frontend/client/build/* ./backend/public\"",
+    "dev": "powershell -NoProfile -Command \"Start-Job { cd backend; npm run dev }; Start-Job { cd frontend/client; npm start }; Receive-Job -Wait *\"",
+    "postinstall": "cd backend && npm install && cd ../frontend/client && npm install",
+    "verify": "node verify-deployment.js",
+    "deploy:check": "node verify-deployment.js"
+  }
+}
