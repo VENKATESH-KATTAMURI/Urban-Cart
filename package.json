@@ -15,8 +15,6 @@
     "build:frontend": "cd frontend/client && npm run build",
     "build": "npm run build:frontend && mkdir -p backend/public && cp -r ./frontend/client/build/* ./backend/public/",
     "dev": "powershell -NoProfile -Command \"Start-Job { cd backend; npm run dev }; Start-Job { cd frontend/client; npm start }; Receive-Job -Wait *\"",
-    "postinstall": "cd backend && npm install && cd ../frontend/client && npm install",
-    "verify": "node verify-deployment.js",
-    "deploy:check": "node verify-deployment.js"
+    "postinstall": "cd backend && npm install && cd ../frontend/client && npm install"
   }
 }

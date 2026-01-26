@@ -4,7 +4,7 @@ import axiosInstance from '../utils/axiosConfig';
 import { FiShoppingCart, FiHeart, FiStar } from 'react-icons/fi';
 import { CartContext } from '../context/CartContext';
 import { AuthContext } from '../context/AuthContext';
-import { getPlaceholderImage, getSemanticImage } from '../utils/imageUtils';
+import { getPlaceholderImage, getSemanticImage, getLocalImage } from '../utils/imageUtils';
 import ProductCard from '../components/ProductCard';
 import './ProductPage.css';
 
@@ -16,7 +16,8 @@ const ProductPage = () => {
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
-  const [imageSrc, setImageSrc] = useState('');
+  const [galleryImages, setGalleryImages] = useState([]);
+  const [selectedImage, setSelectedImage] = useState('');
   const { addToCart } = useContext(CartContext);
   const { user } = useContext(AuthContext);
 
@@ -29,7 +30,23 @@ const ProductPage = () => {
       setLoading(true);
       const res = await axiosInstance.get(`/products/${slug}`);
       setProduct(res.data);
-      setImageSrc(res.data.thumbnailImage || getSemanticImage(res.data.name) || getPlaceholderImage(res.data.name));
+
+      const categorySlug = res.data.category ? res.data.category.slug : 'uncategorized';
+
+      const views = [
+        { suffix: 'front', alt: 'Front View' },
+        { suffix: 'side', alt: 'Side View' },
+        { suffix: 'back', alt: 'Back View' },
+        { suffix: 'detail', alt: 'Detail View' }
+      ];
+
+      const images = views.map(view => ({
+        src: getLocalImage(categorySlug, res.data.slug, view.suffix),
+        alt: `${res.data.name} ${view.alt}`
+      }));
+
+      setGalleryImages(images);
+      setSelectedImage(images[0].src);
 
       // Load recommendations
       const recRes = await axiosInstance.get(`/products/recommended/${res.data._id}`);
@@ -86,17 +103,48 @@ const ProductPage = () => {
         {/* Product Details */}
         <div className="product-details-section">
           <div className="product-images">
-            <img
-              src={imageSrc}
-              alt={product.name}
-              loading="lazy"
-              onError={() => setImageSrc(getPlaceholderImage(product.name))}
-            />
+            <div className="main-image-container">
+              <img
+                src={selectedImage}
+                alt={product.name}
+                loading="lazy"
+                onError={() => setSelectedImage(getPlaceholderImage(product.name))}
+              />
+              {discountPercentage > 0 && (
+                <span className="discount-badge">{discountPercentage}% OFF</span>
+              )}
+              <button
+                className="wishlist-btn"
+                onClick={handleAddToWishlist}
+                style={{ top: '10px', right: '10px', position: 'absolute' }}
+              >
+                <FiHeart />
+              </button>
+            </div>
+
+            <div className="gallery-thumbnails">
+              {galleryImages.map((img, index) => (
+                <div
+                  key={index}
+                  className={`gallery-thumb ${selectedImage === img.src ? 'active' : ''}`}
+                  onClick={() => setSelectedImage(img.src)}
+                >
+                  <img
+                    src={img.src}
+                    alt={img.alt}
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = getPlaceholderImage(product.name);
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="product-details">
             <h1 className="product-title">{product.name}</h1>
-            
+
             {product.brand && (
               <p className="product-brand">Brand: {product.brand}</p>
             )}
@@ -144,7 +192,7 @@ const ProductPage = () => {
                 <button onClick={() => setQuantity(quantity + 1)}>+</button>
               </div>
 
-              <button 
+              <button
                 className="btn btn-primary btn-large"
                 onClick={handleAddToCart}
                 disabled={product.stock === 0}

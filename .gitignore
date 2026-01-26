@@ -5,6 +5,10 @@ frontend/client/node_modules/
 
 # Environment variables
 backend/.env
+.env
+frontend/client/.env
+frontend/client/.env.local
+frontend/client/.env.*
 
 # Build files
 frontend/client/build/

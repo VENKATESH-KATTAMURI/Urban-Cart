@@ -19,7 +19,7 @@ app.use(cors({
   credentials: true
 }));
 // Basic rate limiting for API
-const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 100 });
+const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 1000 });
 app.use('/api', limiter);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -35,8 +35,8 @@ app.use('/api/reviews', require('./routes/reviews'));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'OK', 
+  res.status(200).json({
+    status: 'OK',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     environment: process.env.NODE_ENV
@@ -49,22 +49,30 @@ app.get('/api', (req, res) => {
 });
 
 // Serve static frontend build (SPA) - ONLY for non-API routes
+// Serve static frontend build (SPA) - ONLY for non-API routes
 const publicDir = path.join(__dirname, 'public');
+
+// Explictly serve images separately to ensure they take precedence
+app.use('/images', (req, res, next) => {
+  console.log(`[IMAGE REQUEST] ${req.url}`);
+  next();
+}, express.static(path.join(publicDir, 'images')));
+
 app.use(express.static(publicDir));
 
-// Fallback to index.html for SPA routes (but NOT /api)
+// Fallback to index.html for SPA routes (but NOT /api or /images)
 app.get('*', (req, res) => {
   // Only serve index.html for non-API routes
-  if (!req.path.startsWith('/api')) {
+  if (!req.path.startsWith('/api') && !req.path.startsWith('/images')) {
     res.sendFile(path.join(publicDir, 'index.html'));
   } else {
-    res.status(404).json({ message: 'API endpoint not found' });
+    res.status(404).json({ message: 'Resource not found' });
   }
 });
 // Error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ 
+  res.status(500).json({
     message: 'Something went wrong!',
     error: process.env.NODE_ENV === 'development' ? err.message : undefined
   });

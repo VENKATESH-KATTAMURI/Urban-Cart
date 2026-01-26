@@ -20,16 +20,16 @@ router.get('/', async (req, res) => {
 router.get('/:slug', async (req, res) => {
   try {
     const category = await CategoryRepo.findOne({ slug: req.params.slug, isActive: true });
-    
+
     if (!category) {
       return res.status(404).json({ message: 'Category not found' });
     }
-    
+
     // Get subcategories
     const subcategories = await CategoryRepo.find({ parent: category._id, isActive: true });
-    
+
     res.json({
-      ...category.toObject(),
+      ...category,
       subcategories
     });
   } catch (error) {
@@ -42,9 +42,9 @@ router.get('/:slug', async (req, res) => {
 // @access  Public
 router.get('/:id/subcategories', async (req, res) => {
   try {
-    const subcategories = await CategoryRepo.find({ 
-      parent: req.params.id, 
-      isActive: true 
+    const subcategories = await CategoryRepo.find({
+      parent: req.params.id,
+      isActive: true
     });
     res.json(subcategories);
   } catch (error) {

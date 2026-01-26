@@ -42,8 +42,8 @@ async function findById(id, { populateCategory = false } = {}) {
 }
 
 async function incrementViewsBySlug(slug) {
-  const res = await collection().findOneAndUpdate({ slug, isActive: true }, { $inc: { views: 1 } }, { returnDocument: 'after' });
-  return res.value;
+  await collection().updateOne({ slug, isActive: true }, { $inc: { views: 1 } });
+  return await findOne({ slug }, { populateCategory: true });
 }
 
 // Group products by category with category details
@@ -52,10 +52,22 @@ async function findGroupedByCategory() {
     { $match: { isActive: true } },
     { $lookup: { from: 'categories', localField: 'category', foreignField: '_id', as: 'category' } },
     { $unwind: { path: '$category', preserveNullAndEmptyArrays: true } },
-    { $group: {
+    {
+      $group: {
         _id: '$category._id',
         category: { $first: { _id: '$category._id', name: '$category.name', slug: '$category.slug' } },
-        products: { $push: { _id: '$_id', name: '$name', slug: '$slug', price: '$price', mrpPrice: '$mrpPrice', brand: '$brand', thumbnailImage: '$thumbnailImage' } }
+        products: {
+          $push: {
+            _id: '$_id',
+            name: '$name',
+            slug: '$slug',
+            price: '$price',
+            mrpPrice: '$mrpPrice',
+            brand: '$brand',
+            thumbnailImage: '$thumbnailImage',
+            category: { slug: '$category.slug', name: '$category.name' }
+          }
+        }
       }
     },
     { $sort: { 'category.name': 1 } }

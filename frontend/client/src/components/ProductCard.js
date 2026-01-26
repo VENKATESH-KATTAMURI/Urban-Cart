@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FiHeart, FiShoppingCart, FiStar } from 'react-icons/fi';
 import { CartContext } from '../context/CartContext';
 import { AuthContext } from '../context/AuthContext';
-import { getPlaceholderImage, getSemanticImage } from '../utils/imageUtils';
+import { getPlaceholderImage, getSemanticImage, getLocalImage } from '../utils/imageUtils';
 import './ProductCard.css';
 
 const ProductCard = ({ product }) => {
@@ -11,11 +11,18 @@ const ProductCard = ({ product }) => {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const [isAdding, setIsAdding] = useState(false);
-  const [imageSrc, setImageSrc] = useState(product.thumbnailImage || getSemanticImage(product.name) || getPlaceholderImage(product.name));
+  const [imageSrc, setImageSrc] = useState('');
+
+  React.useEffect(() => {
+    const categorySlug = product.category && product.category.slug ? product.category.slug : 'uncategorized';
+    // Add timestamp to prevent caching issues during development/migration
+    const url = getLocalImage(categorySlug, product.slug);
+    setImageSrc(`${url}?t=${Date.now()}`);
+  }, [product]);
 
   const handleAddToCart = async (e) => {
     e.preventDefault();
-    
+
     if (!user) {
       alert('Please login to add items to cart');
       navigate('/login');
@@ -77,7 +84,7 @@ const ProductCard = ({ product }) => {
         {discountPercentage > 0 && (
           <span className="discount-badge">{discountPercentage}% OFF</span>
         )}
-        <button 
+        <button
           className="wishlist-btn"
           type="button"
           onClick={handleWishlist}
@@ -90,7 +97,7 @@ const ProductCard = ({ product }) => {
 
       <div className="product-info">
         <h3 className="product-name">{product.name}</h3>
-        
+
         {product.brand && (
           <p className="product-brand">{product.brand}</p>
         )}
@@ -110,7 +117,7 @@ const ProductCard = ({ product }) => {
           )}
         </div>
 
-        <button 
+        <button
           className="add-to-cart-btn"
           onClick={handleAddToCart}
           disabled={isAdding}

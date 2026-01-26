@@ -28,7 +28,7 @@ router.get('/featured/list', async (req, res) => {
       limit: 8,
       populateCategory: true
     });
-    
+
     res.json(products);
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
@@ -45,7 +45,7 @@ router.get('/trending/list', async (req, res) => {
       limit: 12,
       populateCategory: true
     });
-    
+
     res.json(products);
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
@@ -58,14 +58,14 @@ router.get('/trending/list', async (req, res) => {
 router.get('/recommended/:productId', async (req, res) => {
   try {
     const currentProduct = await ProductRepo.findById(req.params.productId);
-    
+
     if (!currentProduct) {
       return res.status(404).json({ message: 'Product not found' });
     }
 
     // Get related products from same category with similar price range
     const priceRange = currentProduct.price * 0.3;
-    
+
     const recommendations = await ProductRepo.find({
       _id: { $ne: currentProduct._id },
       category: currentProduct.category,
@@ -89,11 +89,11 @@ router.get('/recommended/:productId', async (req, res) => {
 // @access  Public
 router.get('/', async (req, res) => {
   try {
-    const { 
-      category, 
-      minPrice, 
-      maxPrice, 
-      search, 
+    const {
+      category,
+      minPrice,
+      maxPrice,
+      search,
       sort,
       page = 1,
       limit = 12,

@@ -10,15 +10,15 @@ const FALLBACK_IMAGES = [
     const encodedText = encodeURIComponent(text).replace(/%20/g, '+');
     return `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='500' height='500'%3E%3Crect fill='%23${bg}' width='500' height='500'/%3E%3Ctext x='50%25' y='45%25' font-size='24' font-weight='bold' fill='%23${fg}' text-anchor='middle' font-family='Arial'%3E${encodedText}%3C/text%3E%3Ctext x='50%25' y='60%25' font-size='14' fill='%23${fg}' text-anchor='middle' font-family='Arial' opacity='0.7'%3EProduct%3C/text%3E%3C/svg%3E`;
   },
-  
+
   // Backup 1: via.placeholder.com
   (text, bg = '0FB9B1', fg = 'FFFFFF') =>
     `https://via.placeholder.com/500?text=${encodeURIComponent(text)}&bg=${bg}&fg=${fg}`,
-  
+
   // Backup 2: dummyimage.com
   (text, bg = '0FB9B1', fg = 'FFFFFF') =>
     `https://dummyimage.com/500x500/${bg}/${fg}?text=${encodeURIComponent(text)}`,
-  
+
   // Backup 3: placeholder.pics
   (text, bg = '0FB9B1', fg = 'FFFFFF') =>
     `https://placeholder.pics/svg/500/${bg}/${fg}?text=${encodeURIComponent(text)}`,
@@ -66,8 +66,29 @@ export const getSmallPlaceholder = () => {
  * @returns {string} Semantic image URL
  */
 export const getSemanticImage = (name = 'product', size = 600) => {
-  const query = encodeURIComponent(name.trim() || 'product');
-  // Unsplash Source: may return different images across requests
-  // Use fixed size and include a hash to reduce cache collisions
-  return `https://source.unsplash.com/${size}x${size}/?${query}`;
+  // Use Pollinations AI for exact semantic matching (e.g., "Red Shirt" generates a red shirt)
+  // 1. Clean up the name for the prompt
+  const prompt = encodeURIComponent(`${name} product view realistic high quality`);
+
+  // 2. Generate a consistent seed from the product name
+  let seed = 0;
+  for (let i = 0; i < name.length; i++) {
+    seed = ((seed << 5) - seed) + name.charCodeAt(i);
+    seed |= 0;
+  }
+
+  // 3. Return the AI generated image URL with seed for consistency
+  return `https://image.pollinations.ai/prompt/${prompt}?width=${size}&height=${size}&seed=${Math.abs(seed)}&nologo=true`;
+};
+
+/**
+ * Get the local image URL for a product
+ * @param {string} categorySlug - Category slug
+ * @param {string} productSlug - Product slug
+ * @param {string} view - View type ('front', 'side', 'back', 'detail')
+ * @returns {string} Local image URL
+ */
+// Use relative path to allow proxying by frontend dev server (or same-origin in prod)
+export const getLocalImage = (categorySlug, productSlug, view = 'front') => {
+  return `/images/${categorySlug}/${productSlug}/${view}.jpg`;
 };
